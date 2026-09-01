@@ -2,13 +2,14 @@ pipeline {
     agent any
 
     environment {
-        REGISTRY        = "localhost:5000"
-        IMAGE_NAME      = "task-manager"
-        IMAGE_TAG       = "${env.BUILD_NUMBER}"
-        MANIFESTS_REPO  = "https://github.com/<your-username>/task-manager-manifests.git"
+        REGISTRY       = "localhost:5000"
+        IMAGE_NAME     = "task-manager"
+        IMAGE_TAG      = "${BUILD_NUMBER}"
+        MANIFESTS_REPO = "https://github.com/Amangithub2003/task-manager-manifests.git"
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -17,26 +18,25 @@ pipeline {
 
         stage('Install & Test') {
             steps {
-                dir('app') {
-                    sh 'npm ci'
-                    sh 'npm test'
-                }
+                sh 'npm ci'
+                sh 'npm test'
             }
         }
 
         stage('Build Image') {
             steps {
-                dir('app') {
-                    sh "docker build -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
-                }
+                sh "docker build -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
         stage('Scan Image') {
             steps {
-                // Requires trivy installed on the Jenkins agent/container.
-                // Fails the build on HIGH/CRITICAL vulnerabilities.
-                sh "trivy image --severity HIGH,CRITICAL --exit-code 1 ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                sh """
+                    trivy image \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 1 \
+                    ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                """
             }
         }
 
@@ -46,16 +46,24 @@ pipeline {
             }
         }
 
-        stage('Update Manifests Repo (GitOps trigger)') {
+        stage('Update Manifests Repo') {
             steps {
                 sh """
                     rm -rf manifests-checkout
+
                     git clone ${MANIFESTS_REPO} manifests-checkout
+
                     cd manifests-checkout
-                    sed -i "s|tag: .*|tag: \\"${IMAGE_TAG}\\"|" chart/values.yaml
+
+                    sed -i 's/tag:.*/tag: "${IMAGE_TAG}"/' chart/values.yaml
+
                     git config user.email "jenkins@local"
                     git config user.name "jenkins"
-                    git commit -am "Update image tag to ${IMAGE_TAG}"
+
+                    git add chart/values.yaml
+
+                    git commit -m "Update image tag to ${IMAGE_TAG}" || true
+
                     git push origin main
                 """
             }
@@ -64,10 +72,19 @@ pipeline {
 
     post {
         success {
-            echo "Build ${IMAGE_TAG} pushed and manifests repo updated. ArgoCD will sync automatically."
+            echo "========================================="
+            echo "BUILD SUCCESSFUL"
+            echo "Image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+            echo "Manifests repository updated."
+            echo "Argo CD will deploy the new image."
+            echo "========================================="
         }
+
         failure {
-            echo "Pipeline failed — check test/scan logs above."
+            echo "========================================="
+            echo "BUILD FAILED"
+            echo "Check the stage logs above."
+            echo "========================================="
         }
     }
 }

@@ -113,44 +113,51 @@ pipeline {
         }
 
         stage('Update GitOps Manifest') {
-            steps {
-                echo "Updating GitOps repository..."
+    steps {
+        echo "Updating GitOps repository..."
 
-                sh '''
-                    rm -rf manifests-checkout
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'github-push',
+                usernameVariable: 'GIT_USERNAME',
+                passwordVariable: 'GIT_PASSWORD'
+            )
+        ]) {
+            sh '''
+                rm -rf manifests-checkout
 
-                    git clone \
-                      --branch ${MANIFEST_BRANCH} \
-                      ${MANIFESTS_REPO} \
-                      manifests-checkout
+                git clone \
+                  --branch ${MANIFEST_BRANCH} \
+                  https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/amangithub2003/task-manager-manifests.git \
+                  manifests-checkout
 
-                    cd manifests-checkout
+                cd manifests-checkout
 
-                    echo "Current values.yaml:"
-                    cat chart/values.yaml
+                echo "Current values.yaml:"
+                cat chart/values.yaml
 
-                    sed -i \
-                      "s|tag:.*|tag: \\"${IMAGE_TAG}\\"|" \
-                      chart/values.yaml
+                sed -i \
+                  "s|tag:.*|tag: \\"${IMAGE_TAG}\\"|" \
+                  chart/values.yaml
 
-                    echo "Updated values.yaml:"
-                    cat chart/values.yaml
+                echo "Updated values.yaml:"
+                cat chart/values.yaml
 
-                    git config user.email "jenkins@local"
-                    git config user.name "jenkins"
+                git config user.email "jenkins@local"
+                git config user.name "jenkins"
 
-                    git add chart/values.yaml
+                git add chart/values.yaml
 
-                    if git diff --cached --quiet; then
-                        echo "No manifest changes required."
-                    else
-                        git commit -m "Update task-manager image to ${IMAGE_TAG}"
-                        git push origin ${MANIFEST_BRANCH}
-                    fi
-                '''
-            }
+                if git diff --cached --quiet; then
+                    echo "No manifest changes required."
+                else
+                    git commit -m "Update task-manager image to ${IMAGE_TAG}"
+                    git push origin ${MANIFEST_BRANCH}
+                fi
+            '''
         }
     }
+}
 
     post {
 

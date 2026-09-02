@@ -2,13 +2,17 @@ let allTasks = [];
 let currentFilter = 'all';
 
 const form = document.getElementById('taskForm');
-const input = document.getElementById('title');
-const tasksContainer = document.getElementById('tasks');
-const empty = document.getElementById('empty');
+const input = document.getElementById('taskInput');
+const tasksContainer = document.getElementById('taskList');
 
 async function loadTasks() {
   try {
     const response = await fetch('/tasks');
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
     allTasks = await response.json();
     render();
   } catch (error) {
@@ -32,30 +36,36 @@ function render() {
   tasksContainer.innerHTML = '';
 
   if (filtered.length === 0) {
-    empty.style.display = 'block';
+    tasksContainer.innerHTML =
+      '<div class="empty">No tasks found 🎉</div>';
     return;
   }
-
-  empty.style.display = 'none';
 
   filtered.forEach(task => {
     const item = document.createElement('div');
     item.className = `task ${task.done ? 'done' : ''}`;
 
-    const checkbox = document.createElement('button');
-    checkbox.className = 'checkbox';
-    checkbox.textContent = task.done ? '✓' : '';
-    checkbox.onclick = () => toggleTask(task);
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'task-check';
+    checkbox.checked = task.done;
+
+    checkbox.addEventListener('change', () => {
+      toggleTask(task);
+    });
 
     const title = document.createElement('span');
     title.className = 'task-title';
     title.textContent = task.title;
 
     const deleteButton = document.createElement('button');
-    deleteButton.className = 'delete';
+    deleteButton.className = 'delete-btn';
     deleteButton.textContent = '×';
     deleteButton.title = 'Delete task';
-    deleteButton.onclick = () => deleteTask(task._id);
+
+    deleteButton.addEventListener('click', () => {
+      deleteTask(task._id);
+    });
 
     item.appendChild(checkbox);
     item.appendChild(title);
@@ -70,9 +80,19 @@ function updateStats() {
   const completed = allTasks.filter(task => task.done).length;
   const pending = total - completed;
 
-  document.getElementById('total').textContent = total;
-  document.getElementById('pending').textContent = pending;
-  document.getElementById('completed').textContent = completed;
+  document.getElementById('totalTasks').textContent = total;
+  document.getElementById('pendingTasks').textContent = pending;
+  document.getElementById('completedTasks').textContent = completed;
+
+  const percent = total === 0
+    ? 0
+    : Math.round((completed / total) * 100);
+
+  document.getElementById('progressPercent').textContent = `${percent}%`;
+  document.getElementById('progressText').textContent =
+    `${percent}% completed`;
+
+  document.getElementById('progressFill').style.width = `${percent}%`;
 }
 
 form.addEventListener('submit', async event => {
@@ -82,45 +102,71 @@ form.addEventListener('submit', async event => {
 
   if (!title) return;
 
-  await fetch('/tasks', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ title })
-  });
+  try {
+    const response = await fetch('/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title })
+    });
 
-  input.value = '';
-  await loadTasks();
-  input.focus();
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    input.value = '';
+
+    await loadTasks();
+
+    input.focus();
+  } catch (error) {
+    console.error('Failed to add task:', error);
+  }
 });
 
 async function toggleTask(task) {
-  await fetch(`/tasks/${task._id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      done: !task.done
-    })
-  });
+  try {
+    const response = await fetch(`/tasks/${task._id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        done: !task.done
+      })
+    });
 
-  await loadTasks();
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    await loadTasks();
+  } catch (error) {
+    console.error('Failed to update task:', error);
+  }
 }
 
 async function deleteTask(id) {
-  await fetch(`/tasks/${id}`, {
-    method: 'DELETE'
-  });
+  try {
+    const response = await fetch(`/tasks/${id}`, {
+      method: 'DELETE'
+    });
 
-  await loadTasks();
+    if (!response.ok && response.status !== 204) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    await loadTasks();
+  } catch (error) {
+    console.error('Failed to delete task:', error);
+  }
 }
 
 document.querySelectorAll('.filter').forEach(button => {
   button.addEventListener('click', () => {
-
-    document.querySelectorAll('.filter')
+    document
+      .querySelectorAll('.filter')
       .forEach(btn => btn.classList.remove('active'));
 
     button.classList.add('active');
@@ -132,7 +178,6 @@ document.querySelectorAll('.filter').forEach(button => {
 });
 
 document.getElementById('clearCompleted').addEventListener('click', async () => {
-
   const completed = allTasks.filter(task => task.done);
 
   for (const task of completed) {

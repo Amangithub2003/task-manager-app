@@ -6,7 +6,7 @@ const tasksRouter = require('./routes/tasks');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/taskmanager';
-
+grep -n "path\|express.static" src/index.js
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 // Liveness/readiness endpoints — used by Kubernetes probes

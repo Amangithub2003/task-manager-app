@@ -11,104 +11,140 @@
 
   <div class="app">
 
-    <header class="header">
-      <div>
-        <div class="brand">
-          <div class="logo">✓</div>
-          <div>
-            <h1>TaskFlow</h1>
-            <p>Stay organized. Get things done.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="status">
-        <span class="status-dot"></span>
-        System Online
-      </div>
-    </header>
-
-    <main>
-
-      <section class="welcome">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">✓</div>
         <div>
-          <h2>My Tasks</h2>
-          <p>Manage your daily work in one place.</p>
+          <h2>TaskFlow</h2>
+          <span>Task Manager</span>
         </div>
-      </section>
+      </div>
 
+      <nav>
+        <button class="nav-item active" data-filter="all">
+          <span>📋</span> All Tasks
+        </button>
+
+        <button class="nav-item" data-filter="active">
+          <span>⏳</span> Active
+        </button>
+
+        <button class="nav-item" data-filter="completed">
+          <span>✓</span> Completed
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="system-status">
+          <span class="status-dot"></span>
+          System Online
+        </div>
+
+        <small>Node.js • MongoDB • Kubernetes</small>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+
+      <header class="topbar">
+        <div>
+          <h1>Good day 👋</h1>
+          <p>Stay organized and get things done.</p>
+        </div>
+
+        <div class="avatar">A</div>
+      </header>
+
+      <!-- Stats -->
       <section class="stats">
 
         <div class="stat-card">
-          <div class="stat-icon">📋</div>
+          <div class="stat-icon blue">📋</div>
           <div>
             <span>Total Tasks</span>
-            <strong id="total">0</strong>
+            <strong id="totalTasks">0</strong>
           </div>
         </div>
 
         <div class="stat-card">
-          <div class="stat-icon">⏳</div>
+          <div class="stat-icon orange">⏳</div>
           <div>
             <span>Pending</span>
-            <strong id="pending">0</strong>
+            <strong id="pendingTasks">0</strong>
           </div>
         </div>
 
         <div class="stat-card">
-          <div class="stat-icon">✓</div>
+          <div class="stat-icon green">✓</div>
           <div>
             <span>Completed</span>
-            <strong id="completed">0</strong>
+            <strong id="completedTasks">0</strong>
           </div>
         </div>
 
       </section>
 
-      <section class="task-panel">
+      <!-- Progress -->
+      <section class="progress-card">
+        <div class="progress-header">
+          <div>
+            <h3>Today's Progress</h3>
+            <p id="progressText">0% completed</p>
+          </div>
+
+          <strong id="progressPercent">0%</strong>
+        </div>
+
+        <div class="progress-bar">
+          <div id="progressFill"></div>
+        </div>
+      </section>
+
+      <!-- Tasks -->
+      <section class="tasks-card">
+
+        <div class="section-header">
+          <div>
+            <h2>My Tasks</h2>
+            <p>Manage your daily work in one place.</p>
+          </div>
+        </div>
 
         <form id="taskForm" class="add-task">
           <input
-            id="title"
+            id="taskInput"
             type="text"
             placeholder="What needs to be done?"
             autocomplete="off"
             required
           >
+
           <button type="submit">
-            <span>+</span> Add Task
+            + Add Task
           </button>
         </form>
 
-        <div class="toolbar">
-          <div class="filters">
-            <button class="filter active" data-filter="all">All</button>
-            <button class="filter" data-filter="active">Active</button>
-            <button class="filter" data-filter="completed">Completed</button>
-          </div>
-
-          <button id="clearCompleted" class="clear-btn">
-            Clear completed
-          </button>
+        <div class="task-filters">
+          <button class="filter active" data-filter="all">All</button>
+          <button class="filter" data-filter="active">Active</button>
+          <button class="filter" data-filter="completed">Completed</button>
         </div>
 
-        <div id="tasks" class="tasks"></div>
+        <div id="taskList"></div>
 
-        <div id="empty" class="empty">
-          <div class="empty-icon">🎯</div>
-          <h3>No tasks here</h3>
-          <p>Add a task above to get started.</p>
-        </div>
+        <button id="clearCompleted" class="clear-btn">
+          Clear completed
+        </button>
 
       </section>
 
-    </main>
+      <footer>
+        TaskFlow • Built with Node.js, MongoDB & Kubernetes
+      </footer>
 
-    <footer>
-      <span>TaskFlow</span>
-      <span>•</span>
-      <span>Powered by Node.js + MongoDB + Kubernetes</span>
-    </footer>
+    </main>
 
   </div>
 
